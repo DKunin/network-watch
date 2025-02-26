@@ -3,21 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Device Uptime</title>
+    <title>Device Uptime Checker</title>
+    <link rel="stylesheet" href="styles.css">
     <script defer src="script.js"></script>
 </head>
 <body>
-    <h1>Device Uptime Check</h1>
+    <div class="container">
+        <h1>Device Uptime Checker</h1>
 
-    <label for="device">Select Device:</label>
-    <select id="device"></select>
+        <div class="form-group">
+            <label for="device">Select Device:</label>
+            <select id="device"></select>
+        </div>
 
-    <label for="date">Select Date:</label>
-    <input type="date" id="date">
+        <div class="form-group">
+            <label for="date">Select Date:</label>
+            <input type="date" id="date">
+        </div>
 
-    <button onclick="fetchUptime()">Check Uptime</button>
+        <button id="check-uptime">Check Uptime</button>
 
-    <h2>Result:</h2>
-    <p id="result"></p>
+        <h2>Result:</h2>
+        <p id="result"></p>
+
+        <h2>Current Device Status:</h2>
+        <ul id="device-status"></ul>
+    </div>
 </body>
 </html>

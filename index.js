@@ -130,6 +130,19 @@ app.get('/devices', (req, res) => {
     res.json(devices);
 });
 
+app.get('/status', (req, res) => {
+    const statuses = {};
+
+    for (const [ip, name] of Object.entries(devices)) {
+        statuses[ip] = {
+            name,
+            isOnline: !!deviceStatus[ip]
+        };
+    }
+
+    res.json(statuses);
+});
+
 // Serve frontend
 app.use(express.static('public'));
 
