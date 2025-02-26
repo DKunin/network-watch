@@ -1,20 +1,22 @@
-require('dotenv').config();
-const fs = require('fs');
-const express = require('express');
-const cors = require('cors');
-const ping = require('ping');
-const axios = require('axios');
-const moment = require('moment');
+'use strict';
+
+require("dotenv").config();
+const fs = require("fs");
+const express = require("express");
+const cors = require("cors");
+const ping = require("ping");
+const axios = require("axios");
+const moment = require("moment");
 
 const app = express();
 const PORT = 3031;
 
 app.use(cors());
-app.use(express.static('public')); // Serve static frontend files
+app.use(express.static("public")); // Serve static frontend files
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const NETWORK_SUBNET = "192.168.28";  // Change to match your router's subnet
+const NETWORK_SUBNET = "192.168.28"; // Change to match your router's subnet
 const SCAN_INTERVAL = 10000; // Scan every 10 seconds
 const DB_FILE = "device_log.json";
 
@@ -66,11 +68,17 @@ async function scanNetwork() {
         if (isAlive && deviceStatus[ip] === false) {
             console.log(`${deviceName} (${ip}) is ONLINE`);
             sendTelegramMessage(`✅ ${deviceName} (${ip}) is now ONLINE`);
-            deviceLog[ip][today].push({ status: "online", timestamp: currentTime });
+            deviceLog[ip][today].push({
+                status: "online",
+                timestamp: currentTime,
+            });
         } else if (!isAlive && deviceStatus[ip] === true) {
             console.log(`${deviceName} (${ip}) is OFFLINE`);
             sendTelegramMessage(`❌ ${deviceName} (${ip}) is now OFFLINE`);
-            deviceLog[ip][today].push({ status: "offline", timestamp: currentTime });
+            deviceLog[ip][today].push({
+                status: "offline",
+                timestamp: currentTime,
+            });
         }
 
         deviceStatus[ip] = isAlive;
@@ -91,52 +99,59 @@ async function pingDevice(ip) {
 }
 
 // API to get device uptime
-app.get('/uptime/:ip/:date', (req, res) => {
+app.get("/uptime/:ip/:date", (req, res) => {
     const { ip, date } = req.params;
 
     if (!deviceLog[ip] || !deviceLog[ip][date]) {
-        return res.json({ error: "No data available for this device and date." });
+        return res.json({
+            error: "No data available for this device and date.",
+        });
     }
 
     const logEntries = deviceLog[ip][date];
     let totalUptime = 0;
     let lastOnlineTimestamp = null;
 
-    logEntries.forEach(entry => {
+    logEntries.forEach((entry) => {
         const entryTime = moment(entry.timestamp, "YYYY-MM-DD HH:mm:ss");
 
         if (entry.status === "online") {
             lastOnlineTimestamp = entryTime;
         } else if (entry.status === "offline" && lastOnlineTimestamp) {
-            totalUptime += entryTime.diff(lastOnlineTimestamp, 'seconds');
+            totalUptime += entryTime.diff(lastOnlineTimestamp, "seconds");
             lastOnlineTimestamp = null;
         }
     });
 
     if (lastOnlineTimestamp) {
-        totalUptime += moment(`${date} 23:59:59`, "YYYY-MM-DD HH:mm:ss").diff(lastOnlineTimestamp, 'seconds');
+        totalUptime += moment(`${date} 23:59:59`, "YYYY-MM-DD HH:mm:ss").diff(
+            lastOnlineTimestamp,
+            "seconds"
+        );
     }
 
     res.json({
         device: devices[ip] || ip,
         date,
         uptime_seconds: totalUptime,
-        uptime_human_readable: moment.utc(totalUptime * 1000).format("HH:mm:ss")
+        uptime_human_readable: moment
+            .utc(totalUptime * 1000)
+            .format("HH:mm:ss"),
     });
 });
 
 // API to get list of devices
-app.get('/devices', (req, res) => {
+app.get("/devices", (req, res) => {
     res.json(devices);
 });
 
-app.get('/status', (req, res) => {
+app.get("/status", (req, res) => {
     const statuses = {};
 
     for (const [ip, name] of Object.entries(devices)) {
         statuses[ip] = {
             name,
-            isOnline: !!deviceStatus[ip]
+            isOnline: !!deviceStatus[ip],
         };
     }
 
@@ -144,7 +159,7 @@ app.get('/status', (req, res) => {
 });
 
 // Serve frontend
-app.use(express.static('public'));
+app.use(express.static("public"));
 
 // Start server
 app.listen(PORT, () => {
