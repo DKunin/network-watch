@@ -1,0 +1,88 @@
+{
+  "192.168.28.203": {
+    "2025-02-26": [
+      {
+        "status": "offline",
+        "timestamp": "2025-02-26 07:29:07"
+      },
+      {
+        "status": "online",
+        "timestamp": "2025-02-26 07:29:17"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2025-02-26 07:35:37"
+      },
+      {
+        "status": "online",
+        "timestamp": "2025-02-26 07:35:47"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2025-02-26 07:37:07"
+      },
+      {
+        "status": "online",
+        "timestamp": "2025-02-26 07:37:17"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2025-02-26 07:45:27"
+      },
+      {
+        "status": "online",
+        "timestamp": "2025-02-26 07:45:37"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2025-02-26 07:46:57"
+      },
+      {
+        "status": "online",
+        "timestamp": "2025-02-26 07:47:07"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2025-02-26 07:47:27"
+      },
+      {
+        "status": "online",
+        "timestamp": "2025-02-26 07:47:37"
+      }
+    ]
+  },
+  "192.168.28.235": {
+    "2025-02-26": []
+  },
+  "192.168.28.22": {
+    "2025-02-26": [
+      {
+        "status": "online",
+        "timestamp": "2025-02-26 07:24:45"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2025-02-26 07:25:15"
+      },
+      {
+        "status": "online",
+        "timestamp": "2025-02-26 07:32:27"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2025-02-26 07:33:37"
+      }
+    ]
+  },
+  "192.168.28.127": {
+    "2025-02-26": [
+      {
+        "status": "online",
+        "timestamp": "2025-02-26 07:24:00"
+      }
+    ]
+  },
+  "192.168.28.186": {
+    "2025-02-26": []
+  }
+}

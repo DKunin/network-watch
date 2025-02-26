@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Uptime</title>
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <h1>Device Uptime Checker</h1>
+
+    <label for="device">Select Device:</label>
+    <select id="device"></select>
+
+    <label for="date">Select Date:</label>
+    <input type="date" id="date">
+
+    <button onclick="fetchUptime()">Check Uptime</button>
+
+    <h2>Result:</h2>
+    <p id="result"></p>
+</body>
+</html>
