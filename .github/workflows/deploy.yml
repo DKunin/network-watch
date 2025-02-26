@@ -17,7 +17,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: 62.217.190.139
-          username: root
+          username: dekunin
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/apps/network-watch
