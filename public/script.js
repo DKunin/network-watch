@@ -1,7 +1,7 @@
-document.addEventListener("DOMContentLoaded", () => {
-  loadDevices();
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadDevices();
   setDefaultDate();
-  fetchCurrentStatus();
+  await fetchCurrentStatus();
 
   document
     .getElementById("check-uptime")
