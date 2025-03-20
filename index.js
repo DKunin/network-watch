@@ -68,15 +68,15 @@ async function scanNetwork() {
     if (!(today in deviceLog[ip])) deviceLog[ip][today] = [];
 
     if (isAlive && deviceStatus[ip] === false) {
-      console.log(`${deviceName} (${ip}) is ONLINE`);
-      sendTelegramMessage(`✅ ${deviceName} (${ip}) is now ONLINE`);
+      console.log(`${deviceName} is ONLINE`);
+      sendTelegramMessage(`✅ ${deviceName} is now ONLINE`);
       deviceLog[ip][today].push({
         status: "online",
         timestamp: currentTime,
       });
     } else if (!isAlive && deviceStatus[ip] === true) {
-      console.log(`${deviceName} (${ip}) is OFFLINE`);
-      sendTelegramMessage(`❌ ${deviceName} (${ip}) is now OFFLINE`);
+      console.log(`${deviceName} is OFFLINE`);
+      sendTelegramMessage(`❌ ${deviceName} is now OFFLINE`);
       deviceLog[ip][today].push({
         status: "offline",
         timestamp: currentTime,
