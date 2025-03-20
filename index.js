@@ -116,10 +116,14 @@ function calculateUptime(logEntries, date) {
   });
 
   if (lastOnlineTimestamp) {
-    totalUptime += moment(`${date} 23:59:59`, "YYYY-MM-DD HH:mm:ss").diff(
-      lastOnlineTimestamp,
-      "seconds"
-    );
+    if (date === moment().format("YYYY-MM-DD")) {
+      totalUptime += moment().diff(lastOnlineTimestamp, "seconds");
+    } else {
+      totalUptime += moment(`${date} 23:59:59`, "YYYY-MM-DD HH:mm:ss").diff(
+        lastOnlineTimestamp,
+        "seconds"
+      );
+    }
   }
 
   return totalUptime;

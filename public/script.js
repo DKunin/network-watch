@@ -50,9 +50,8 @@ async function fetchUptime() {
     if (data.error) {
       document.getElementById("result").textContent = data.error;
     } else {
-      document.getElementById(
-        "result"
-      ).textContent = `Device: ${data.device}\nDate: ${data.date}\nUptime: ${data.uptime_human_readable}`;
+      document.getElementById("result").textContent =
+        `Device: ${data.device}\nDate: ${data.date}\nUptime: ${data.uptime_human_readable}`;
     }
   } catch (error) {
     console.error("Error fetching uptime:", error);
@@ -80,6 +79,15 @@ async function fetchCurrentStatus() {
   }
 }
 
+function formatDecimalHours(hoursArray) {
+  return hoursArray.map(decimalHours => {
+    const hours = Math.floor(decimalHours);
+    const minutes = Math.floor((decimalHours - hours) * 60);
+    const minutesStr = minutes < 10 ? "0" + minutes : minutes;
+    return `${hours}.${minutesStr}`;
+  });
+}
+
 async function fetchWeeklyUptime() {
   const device = document.getElementById("device").value;
   if (!device) return;
@@ -90,8 +98,15 @@ async function fetchWeeklyUptime() {
 
     const labels = data.map((entry) => entry.date);
     const uptimes = data.map((entry) => entry.uptime);
-
-    renderChart(labels, uptimes);
+    // const uptimes = data.map((entry) => {
+    //   const seconds = entry.uptime;
+    //   const hours = Math.floor(seconds / 3600);
+    //   const minutes = Math.floor((seconds % 3600) / 60);
+    //   // Return a float value where the fractional part represents minutes in a two-digit format (e.g., 1.50 for 1h50m)
+    //   return parseFloat(`${hours}.${minutes < 10 ? "0" : ""}${minutes}`);
+    // });
+    console.log(uptimes)
+    renderChart(labels, formatDecimalHours(uptimes));
   } catch (error) {
     console.error("Error fetching weekly uptime:", error);
   }
