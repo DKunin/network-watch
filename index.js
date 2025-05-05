@@ -20,6 +20,11 @@ const DEBUG = process.env.DEBUG;
 const NETWORK_SUBNET = "192.168.28"; // Change to match your router's subnet
 const SCAN_INTERVAL = 10000; // Scan every 10 seconds
 const DB_FILE = "device_log.json";
+const TELEGRAM_DEBOUNCE_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+let lastSentTime = 0;
+let pendingMessage = null;
+let timeoutId = null;
+
 
 // List of devices to monitor (IP addresses)
 const devices = {
@@ -46,6 +51,29 @@ function saveDatabase() {
 
 // Function to send Telegram alerts
 async function sendTelegramMessage(message) {
+  const now = Date.now();
+  
+  if (now - lastSentTime >= TELEGRAM_DEBOUNCE_INTERVAL) {
+    // Enough time passed, send immediately
+    await actuallySendMessage(message);
+    lastSentTime = now;
+  } else {
+    // Schedule sending the latest message after the remaining time
+    pendingMessage = message;
+    
+    if (!timeoutId) {
+      const delay = TELEGRAM_DEBOUNCE_INTERVAL - (now - lastSentTime);
+      timeoutId = setTimeout(async () => {
+        await actuallySendMessage(pendingMessage);
+        lastSentTime = Date.now();
+        pendingMessage = null;
+        timeoutId = null;
+      }, delay);
+    }
+  }
+}
+
+async function actuallySendMessage(message) {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
   try {
     await axios.post(url, { chat_id: TELEGRAM_CHAT_ID, text: message });
