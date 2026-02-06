@@ -21,6 +21,8 @@ const NETWORK_SUBNET = "192.168.28"; // Change to match your router's subnet
 const SCAN_INTERVAL = 10000; // Scan every 10 seconds
 const DB_FILE = "device_log.json";
 const TELEGRAM_DEBOUNCE_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+const NOTIFICATION_START_HOUR = 8;
+const NOTIFICATION_END_HOUR = 24;
 let lastSentTime = 0;
 let pendingMessage = null;
 let timeoutId = null;
@@ -66,12 +68,18 @@ function saveDatabase() {
 
 // Function to send Telegram alerts
 async function sendTelegramMessage(message) {
+  if (!isWithinNotificationWindow()) {
+    return;
+  }
+
   const now = Date.now();
   
   if (now - lastSentTime >= TELEGRAM_DEBOUNCE_INTERVAL) {
     // Enough time passed, send immediately
-    await actuallySendMessage(message);
-    lastSentTime = now;
+    const didSend = await actuallySendMessage(message);
+    if (didSend) {
+      lastSentTime = now;
+    }
   } else {
     // Schedule sending the latest message after the remaining time
     pendingMessage = message;
@@ -79,8 +87,10 @@ async function sendTelegramMessage(message) {
     if (!timeoutId) {
       const delay = TELEGRAM_DEBOUNCE_INTERVAL - (now - lastSentTime);
       timeoutId = setTimeout(async () => {
-        await actuallySendMessage(pendingMessage);
-        lastSentTime = Date.now();
+        const didSend = await actuallySendMessage(pendingMessage);
+        if (didSend) {
+          lastSentTime = Date.now();
+        }
         pendingMessage = null;
         timeoutId = null;
       }, delay);
@@ -89,12 +99,23 @@ async function sendTelegramMessage(message) {
 }
 
 async function actuallySendMessage(message) {
+  if (!isWithinNotificationWindow()) {
+    return false;
+  }
+
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
   try {
     await axios.post(url, { chat_id: TELEGRAM_CHAT_ID, text: message });
+    return true;
   } catch (error) {
     console.error("Failed to send Telegram message:", error);
   }
+  return false;
+}
+
+function isWithinNotificationWindow() {
+  const hour = moment().hour();
+  return hour >= NOTIFICATION_START_HOUR && hour < NOTIFICATION_END_HOUR;
 }
 
 // Function to scan devices on network
