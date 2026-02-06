@@ -30,6 +30,7 @@ let timeoutId = null;
 const devices = {
   // "192.168.28.203": "Kir Laptop",
   // "192.168.28.235": "Work Laptop",
+  "192.168.28.40": "Kir's Phone",
   "192.168.28.22": "TV",
 };
 
