@@ -28,10 +28,24 @@ let timeoutId = null;
 
 // List of devices to monitor (IP addresses)
 const devices = {
-  // "192.168.28.203": "Kir Laptop",
-  // "192.168.28.235": "Work Laptop",
-  "192.168.28.40": "Kir's Phone",
-  "192.168.28.22": "TV",
+  // "192.168.28.203": { name: "Kir Laptop" },
+  // "192.168.28.235": { name: "Work Laptop" },
+  "192.168.28.40": {
+    name: "Kir's Phone",
+    messages: {
+      online: "✅ {name} is back online.",
+      offline: "❌ {name} dropped offline.",
+    },
+    notifyOnSameStatus: true,
+  },
+  "192.168.28.22": {
+    name: "TV",
+    messages: {
+      online: "✅ {name} is ready to stream.",
+      offline: "❌ {name} is offline.",
+    },
+    notifyOnSameStatus: true,
+  },
 };
 
 let deviceStatus = {};
@@ -92,20 +106,34 @@ async function scanNetwork() {
 
   for (let ip in devices) {
     const isAlive = await pingDevice(ip);
-    const deviceName = devices[ip];
+    const deviceConfig = devices[ip];
+    const deviceName = deviceConfig.name || ip;
     if (!(ip in deviceLog)) deviceLog[ip] = {};
     if (!(today in deviceLog[ip])) deviceLog[ip][today] = [];
 
+    const statusLabel = isAlive ? "ONLINE" : "OFFLINE";
+    const messageTemplate = isAlive
+      ? deviceConfig?.messages?.online
+      : deviceConfig?.messages?.offline;
+    const fallbackMessage = `${isAlive ? "✅" : "❌"} ${deviceName} is now ${statusLabel}`;
+    const messageText = (messageTemplate || fallbackMessage).replace(
+      /\{name\}/g,
+      deviceName
+    );
+    const shouldNotify =
+      deviceConfig?.notifyOnSameStatus || deviceStatus[ip] !== isAlive;
+
+    if (shouldNotify) {
+      console.log(`${deviceName} is ${statusLabel}`);
+      sendTelegramMessage(messageText);
+    }
+
     if (isAlive && deviceStatus[ip] === false) {
-      console.log(`${deviceName} is ONLINE`);
-      sendTelegramMessage(`✅ ${deviceName} is now ONLINE`);
       deviceLog[ip][today].push({
         status: "online",
         timestamp: currentTime,
       });
     } else if (!isAlive && deviceStatus[ip] === true) {
-      console.log(`${deviceName} is OFFLINE`);
-      sendTelegramMessage(`❌ ${deviceName} is now OFFLINE`);
       deviceLog[ip][today].push({
         status: "offline",
         timestamp: currentTime,
@@ -167,7 +195,7 @@ app.get("/uptime/:ip/:date", (req, res) => {
 
   const totalUptime = calculateUptime(deviceLog[ip][date], date);
   res.json({
-    device: devices[ip] || ip,
+    device: devices[ip]?.name || ip,
     date,
     uptime_seconds: totalUptime,
     uptime_human_readable: moment.utc(totalUptime * 1000).format("HH:mm:ss"),
@@ -206,7 +234,7 @@ app.get("/status", (req, res) => {
 
   for (const [ip, name] of Object.entries(devices)) {
     statuses[ip] = {
-      name,
+      name: name?.name || ip,
       isOnline: !!deviceStatus[ip],
     };
   }
