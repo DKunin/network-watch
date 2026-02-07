@@ -1,11 +1,15 @@
 document.addEventListener("DOMContentLoaded", async () => {
   await loadDevices();
   setDefaultDate();
+  await loadNotificationSetting();
   await fetchCurrentStatus();
 
   document
     .getElementById("check-uptime")
     .addEventListener("click", fetchUptime);
+  document
+    .getElementById("notifications-toggle")
+    .addEventListener("change", updateNotificationSetting);
   setTimeout(fetchUptime, 1500);
   setTimeout(fetchWeeklyUptime, 1500);
 });
@@ -77,6 +81,49 @@ async function fetchCurrentStatus() {
   } catch (error) {
     console.error("Error fetching current status:", error);
   }
+}
+
+async function loadNotificationSetting() {
+  const toggle = document.getElementById("notifications-toggle");
+  try {
+    const response = await fetch("/notifications");
+    const data = await response.json();
+    toggle.checked = !!data.enabled;
+    updateNotificationStatusText(toggle.checked);
+  } catch (error) {
+    console.error("Error loading notification setting:", error);
+    updateNotificationStatusText(false);
+  }
+}
+
+async function updateNotificationSetting(event) {
+  const enabled = event.target.checked;
+  try {
+    const response = await fetch("/notifications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update notifications.");
+    }
+
+    const data = await response.json();
+    event.target.checked = !!data.enabled;
+    updateNotificationStatusText(event.target.checked);
+  } catch (error) {
+    console.error("Error updating notification setting:", error);
+    event.target.checked = !enabled;
+    updateNotificationStatusText(event.target.checked);
+  }
+}
+
+function updateNotificationStatusText(enabled) {
+  const status = document.getElementById("notifications-status");
+  status.textContent = enabled
+    ? "Notifications enabled"
+    : "Notifications disabled";
 }
 
 function formatDecimalHours(hoursArray) {
