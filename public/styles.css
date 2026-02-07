@@ -71,3 +71,19 @@ h2 {
 #device-status li {
     margin-bottom: 5px;
 }
+
+.notifications-toggle .toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#notifications-toggle {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+#notifications-status {
+    font-weight: bold;
+}

@@ -12,6 +12,7 @@ const app = express();
 const PORT = 3031;
 
 app.use(cors());
+app.use(express.json());
 app.use(express.static("public")); // Serve static frontend files
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -20,12 +21,14 @@ const DEBUG = process.env.DEBUG;
 const NETWORK_SUBNET = "192.168.28"; // Change to match your router's subnet
 const SCAN_INTERVAL = 10000; // Scan every 10 seconds
 const DB_FILE = "device_log.json";
+const SETTINGS_FILE = "notification_settings.json";
 const TELEGRAM_DEBOUNCE_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
 const NOTIFICATION_START_HOUR = 8;
 const NOTIFICATION_END_HOUR = 24;
 let lastSentTime = 0;
 let pendingMessage = null;
 let timeoutId = null;
+let notificationsEnabled = loadNotificationSettings().notificationsEnabled;
 
 
 // List of devices to monitor (IP addresses)
@@ -66,8 +69,26 @@ function saveDatabase() {
   fs.writeFileSync(DB_FILE, JSON.stringify(deviceLog, null, 2));
 }
 
+function loadNotificationSettings() {
+  if (fs.existsSync(SETTINGS_FILE)) {
+    return JSON.parse(fs.readFileSync(SETTINGS_FILE));
+  }
+  return { notificationsEnabled: false };
+}
+
+function saveNotificationSettings() {
+  fs.writeFileSync(
+    SETTINGS_FILE,
+    JSON.stringify({ notificationsEnabled }, null, 2)
+  );
+}
+
 // Function to send Telegram alerts
 async function sendTelegramMessage(message) {
+  if (!notificationsEnabled) {
+    return;
+  }
+
   if (!isWithinNotificationWindow()) {
     return;
   }
@@ -99,6 +120,10 @@ async function sendTelegramMessage(message) {
 }
 
 async function actuallySendMessage(message) {
+  if (!notificationsEnabled) {
+    return false;
+  }
+
   if (!isWithinNotificationWindow()) {
     return false;
   }
@@ -261,6 +286,23 @@ app.get("/status", (req, res) => {
   }
 
   res.json(statuses);
+});
+
+app.get("/notifications", (req, res) => {
+  res.json({ enabled: notificationsEnabled });
+});
+
+app.post("/notifications", (req, res) => {
+  const { enabled } = req.body;
+
+  if (typeof enabled !== "boolean") {
+    return res.status(400).json({ error: "enabled must be a boolean value." });
+  }
+
+  notificationsEnabled = enabled;
+  saveNotificationSettings();
+
+  return res.json({ enabled: notificationsEnabled });
 });
 
 // Serve frontend
