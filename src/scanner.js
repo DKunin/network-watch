@@ -23,6 +23,24 @@ function createScanner(options) {
     return (template || fallback).replace(/\{name\}/g, deviceName);
   }
 
+  function getLastLoggedStatus(ip) {
+    const historyByDate = deviceLog[ip];
+    if (!historyByDate) {
+      return null;
+    }
+
+    const dates = Object.keys(historyByDate).sort();
+    for (let i = dates.length - 1; i >= 0; i -= 1) {
+      const entries = historyByDate[dates[i]];
+      if (!Array.isArray(entries) || entries.length === 0) {
+        continue;
+      }
+      return entries[entries.length - 1].status || null;
+    }
+
+    return null;
+  }
+
   async function pingDevice(ip) {
     try {
       const result = await ping.promise.probe(ip, { timeout: 2 });
@@ -64,14 +82,19 @@ function createScanner(options) {
 
         if (didStatusChange) {
           const nextStatus = isAlive ? "online" : "offline";
-          deviceLog[ip][today].push({
-            status: nextStatus,
-            timestamp: currentTime,
-          });
-          didChangeLog = true;
+          const lastLoggedStatus = getLastLoggedStatus(ip);
+          const isDuplicateStatus = lastLoggedStatus === nextStatus;
 
-          console.log(`${deviceName} is ${nextStatus.toUpperCase()}`);
-          await notifier.send(buildMessage(deviceName, isAlive, deviceConfig));
+          if (!isDuplicateStatus) {
+            deviceLog[ip][today].push({
+              status: nextStatus,
+              timestamp: currentTime,
+            });
+            didChangeLog = true;
+
+            console.log(`${deviceName} is ${nextStatus.toUpperCase()}`);
+            await notifier.send(buildMessage(deviceName, isAlive, deviceConfig));
+          }
         }
 
         deviceStatus[ip] = isAlive;
