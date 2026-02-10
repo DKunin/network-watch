@@ -1,246 +1,62 @@
 "use strict";
 
 require("dotenv").config();
-const fs = require("fs");
+
 const express = require("express");
 const cors = require("cors");
-const ping = require("ping");
-const axios = require("axios");
 const moment = require("moment");
 
+const config = require("./src/config");
+const devices = require("./src/devices");
+const {
+  loadDeviceLog,
+  saveDeviceLog,
+  loadNotificationSettings,
+  saveNotificationSettings,
+} = require("./src/storage");
+const { calculateUptime } = require("./src/uptime");
+const { TelegramNotifier } = require("./src/notifier");
+const { createScanner } = require("./src/scanner");
+
 const app = express();
-const PORT = 3031;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // Serve static frontend files
+app.use(express.static("public"));
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const DEBUG = process.env.DEBUG;
-const NETWORK_SUBNET = "192.168.28"; // Change to match your router's subnet
-const SCAN_INTERVAL = 10000; // Scan every 10 seconds
-const DB_FILE = "device_log.json";
-const SETTINGS_FILE = "notification_settings.json";
-const TELEGRAM_DEBOUNCE_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
-const NOTIFICATION_START_HOUR = 8;
-const NOTIFICATION_END_HOUR = 24;
-let lastSentTime = 0;
-let pendingMessage = null;
-let timeoutId = null;
-let notificationsEnabled = loadNotificationSettings().notificationsEnabled;
-
-
-// List of devices to monitor (IP addresses)
-const devices = {
-  // "192.168.28.203": { name: "Kir Laptop" },
-  // "192.168.28.235": { name: "Work Laptop" },
-  "192.168.28.40": {
-    name: "Kir's Phone",
-    messages: {
-      online: "✅ {name} is back online.",
-      offline: "❌ {name} dropped offline.",
-    },
-    notifyOnSameStatus: true,
-  },
-  "192.168.28.22": {
-    name: "TV",
-    messages: {
-      online: "✅ {name} is ready to stream.",
-      offline: "❌ {name} is offline.",
-    },
-    notifyOnSameStatus: true,
-  },
+const state = {
+  notificationsEnabled:
+    loadNotificationSettings(config.SETTINGS_FILE).notificationsEnabled,
 };
 
-let deviceStatus = {};
-let deviceLog = loadDatabase();
+const notifier = new TelegramNotifier({
+  botToken: process.env.TELEGRAM_BOT_TOKEN,
+  chatId: process.env.TELEGRAM_CHAT_ID,
+  debounceInterval: config.TELEGRAM_DEBOUNCE_INTERVAL,
+  notificationStartHour: config.NOTIFICATION_START_HOUR,
+  notificationEndHour: config.NOTIFICATION_END_HOUR,
+  isEnabled: () => state.notificationsEnabled,
+});
 
-// Function to load database
-function loadDatabase() {
-  if (fs.existsSync(DB_FILE)) {
-    return JSON.parse(fs.readFileSync(DB_FILE));
-  }
-  return {};
-}
-
-// Function to save database
-function saveDatabase() {
-  fs.writeFileSync(DB_FILE, JSON.stringify(deviceLog, null, 2));
-}
-
-function loadNotificationSettings() {
-  if (fs.existsSync(SETTINGS_FILE)) {
-    return JSON.parse(fs.readFileSync(SETTINGS_FILE));
-  }
-  return { notificationsEnabled: false };
-}
-
-function saveNotificationSettings() {
-  fs.writeFileSync(
-    SETTINGS_FILE,
-    JSON.stringify({ notificationsEnabled }, null, 2)
-  );
-}
-
-// Function to send Telegram alerts
-async function sendTelegramMessage(message) {
-  if (!notificationsEnabled) {
-    return;
-  }
-
-  if (!isWithinNotificationWindow()) {
-    return;
-  }
-
-  const now = Date.now();
-  
-  if (now - lastSentTime >= TELEGRAM_DEBOUNCE_INTERVAL) {
-    // Enough time passed, send immediately
-    const didSend = await actuallySendMessage(message);
-    if (didSend) {
-      lastSentTime = now;
-    }
-  } else {
-    // Schedule sending the latest message after the remaining time
-    pendingMessage = message;
-    
-    if (!timeoutId) {
-      const delay = TELEGRAM_DEBOUNCE_INTERVAL - (now - lastSentTime);
-      timeoutId = setTimeout(async () => {
-        const didSend = await actuallySendMessage(pendingMessage);
-        if (didSend) {
-          lastSentTime = Date.now();
-        }
-        pendingMessage = null;
-        timeoutId = null;
-      }, delay);
-    }
-  }
-}
-
-async function actuallySendMessage(message) {
-  if (!notificationsEnabled) {
-    return false;
-  }
-
-  if (!isWithinNotificationWindow()) {
-    return false;
-  }
-
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  try {
-    await axios.post(url, { chat_id: TELEGRAM_CHAT_ID, text: message });
-    return true;
-  } catch (error) {
-    console.error("Failed to send Telegram message:", error);
-  }
-  return false;
-}
-
-function isWithinNotificationWindow() {
-  const hour = moment().hour();
-  return hour >= NOTIFICATION_START_HOUR && hour < NOTIFICATION_END_HOUR;
-}
-
-// Function to scan devices on network
-async function scanNetwork() {
-  if (DEBUG) return;
-  console.log("Scanning network...");
-  const currentTime = moment().format("YYYY-MM-DD HH:mm:ss");
-  const today = moment().format("YYYY-MM-DD");
-
-  for (let ip in devices) {
-    const isAlive = await pingDevice(ip);
-    const deviceConfig = devices[ip];
-    const deviceName = deviceConfig.name || ip;
-    if (!(ip in deviceLog)) deviceLog[ip] = {};
-    if (!(today in deviceLog[ip])) deviceLog[ip][today] = [];
-
-    const statusLabel = isAlive ? "ONLINE" : "OFFLINE";
-    const messageTemplate = isAlive
-      ? deviceConfig?.messages?.online
-      : deviceConfig?.messages?.offline;
-    const fallbackMessage = `${isAlive ? "✅" : "❌"} ${deviceName} is now ${statusLabel}`;
-    const messageText = (messageTemplate || fallbackMessage).replace(
-      /\{name\}/g,
-      deviceName
-    );
-    const shouldNotify =
-      deviceConfig?.notifyOnSameStatus || deviceStatus[ip] !== isAlive;
-
-    if (shouldNotify) {
-      console.log(`${deviceName} is ${statusLabel}`);
-      sendTelegramMessage(messageText);
-    }
-
-    if (isAlive && deviceStatus[ip] === false) {
-      deviceLog[ip][today].push({
-        status: "online",
-        timestamp: currentTime,
-      });
-    } else if (!isAlive && deviceStatus[ip] === true) {
-      deviceLog[ip][today].push({
-        status: "offline",
-        timestamp: currentTime,
-      });
-    }
-
-    deviceStatus[ip] = isAlive;
-  }
-
-  saveDatabase();
-}
-
-// Function to ping devices
-async function pingDevice(ip) {
-  try {
-    const res = await ping.promise.probe(ip, { timeout: 2 });
-    return res.alive;
-  } catch (error) {
-    console.error(`Ping error for ${ip}:`, error);
-    return false;
-  }
-}
-
-function calculateUptime(logEntries, date) {
-  let totalUptime = 0;
-  let lastOnlineTimestamp = null;
-
-  logEntries.forEach((entry) => {
-    const entryTime = moment(entry.timestamp, "YYYY-MM-DD HH:mm:ss");
-
-    if (entry.status === "online") {
-      lastOnlineTimestamp = entryTime;
-    } else if (entry.status === "offline" && lastOnlineTimestamp) {
-      totalUptime += entryTime.diff(lastOnlineTimestamp, "seconds");
-      lastOnlineTimestamp = null;
-    }
-  });
-
-  if (lastOnlineTimestamp) {
-    if (date === moment().format("YYYY-MM-DD")) {
-      totalUptime += moment().diff(lastOnlineTimestamp, "seconds");
-    } else {
-      totalUptime += moment(`${date} 23:59:59`, "YYYY-MM-DD HH:mm:ss").diff(
-        lastOnlineTimestamp,
-        "seconds"
-      );
-    }
-  }
-
-  return totalUptime;
-}
+const scanner = createScanner({
+  devices,
+  notifier,
+  debug: config.IS_DEBUG,
+  initialDeviceLog: loadDeviceLog(config.DB_FILE),
+  saveDeviceLog: (deviceLog) => saveDeviceLog(config.DB_FILE, deviceLog),
+});
 
 app.get("/uptime/:ip/:date", (req, res) => {
   const { ip, date } = req.params;
+  const deviceLog = scanner.getDeviceLog();
 
   if (!deviceLog[ip] || !deviceLog[ip][date]) {
     return res.json({ error: "No data available for this device and date." });
   }
 
   const totalUptime = calculateUptime(deviceLog[ip][date], date);
-  res.json({
+
+  return res.json({
     device: devices[ip]?.name || ip,
     date,
     uptime_seconds: totalUptime,
@@ -250,46 +66,35 @@ app.get("/uptime/:ip/:date", (req, res) => {
 
 app.get("/weekly/:ip", (req, res) => {
   const { ip } = req.params;
-  const uptimeData = loadDatabase();
+  const deviceLog = scanner.getDeviceLog();
   const result = [];
   const today = new Date();
 
-  for (let i = 6; i >= 0; i--) {
+  for (let i = 6; i >= 0; i -= 1) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
     const dateString = date.toISOString().split("T")[0];
-    const logEntries =
-      uptimeData[ip] && uptimeData[ip][dateString]
-        ? uptimeData[ip][dateString]
-        : [];
+
+    const logEntries = deviceLog[ip]?.[dateString] || [];
     const totalUptime = calculateUptime(logEntries, dateString);
-    const uptimeHours = (totalUptime / 3600).toFixed(2); // Convert seconds to hours
+    const uptimeHours = (totalUptime / 3600).toFixed(2);
+
     result.push({ date: dateString, uptime: parseFloat(uptimeHours) });
   }
 
-  res.json(result);
+  return res.json(result);
 });
 
-// API to get list of devices
 app.get("/devices", (req, res) => {
   res.json(devices);
 });
 
 app.get("/status", (req, res) => {
-  const statuses = {};
-
-  for (const [ip, name] of Object.entries(devices)) {
-    statuses[ip] = {
-      name: name?.name || ip,
-      isOnline: !!deviceStatus[ip],
-    };
-  }
-
-  res.json(statuses);
+  res.json(scanner.getStatuses());
 });
 
 app.get("/notifications", (req, res) => {
-  res.json({ enabled: notificationsEnabled });
+  res.json({ enabled: state.notificationsEnabled });
 });
 
 app.post("/notifications", (req, res) => {
@@ -299,20 +104,18 @@ app.post("/notifications", (req, res) => {
     return res.status(400).json({ error: "enabled must be a boolean value." });
   }
 
-  notificationsEnabled = enabled;
-  saveNotificationSettings();
+  state.notificationsEnabled = enabled;
+  saveNotificationSettings(config.SETTINGS_FILE, state.notificationsEnabled);
 
-  return res.json({ enabled: notificationsEnabled });
+  return res.json({ enabled: state.notificationsEnabled });
 });
 
-// Serve frontend
-app.use(express.static("public"));
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(config.PORT, () => {
+  console.log(`Server running on http://localhost:${config.PORT}`);
 });
 
-// Start scanning network periodically
-setInterval(scanNetwork, SCAN_INTERVAL);
-scanNetwork();
+setInterval(() => {
+  scanner.scan();
+}, config.SCAN_INTERVAL);
+
+scanner.scan();
