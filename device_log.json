@@ -10601,9 +10601,97 @@
       {
         "status": "offline",
         "timestamp": "2026-02-06 15:56:26"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-06 22:37:02"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-06 23:56:02"
       }
     ],
-    "2026-02-10": []
+    "2026-02-07": [
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 09:51:20"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 10:19:31"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 11:28:01"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 12:04:01"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 22:49:22"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 23:23:42"
+      }
+    ],
+    "2026-02-08": [
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 09:14:34"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 09:37:24"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 16:50:45"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 17:52:15"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 20:58:25"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 21:33:55"
+      }
+    ],
+    "2026-02-09": [
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 21:24:19"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 22:07:39"
+      }
+    ],
+    "2026-02-10": [
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 15:54:11"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 16:36:21"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 18:38:46"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 18:39:46"
+      }
+    ],
+    "2026-02-11": []
   },
   "192.168.28.127": {
     "2025-02-26": [
@@ -10617,18 +10705,552 @@
     "2025-02-26": []
   },
   "192.168.28.40": {
-    "2026-02-10": [
+    "2026-02-06": [
+      {
+        "status": "online",
+        "timestamp": "2026-02-06 21:06:31"
+      },
       {
         "status": "offline",
-        "timestamp": "2026-02-10 17:51:29"
+        "timestamp": "2026-02-06 21:26:51"
       },
       {
         "status": "online",
-        "timestamp": "2026-02-10 17:51:49"
+        "timestamp": "2026-02-06 21:31:41"
       },
       {
         "status": "offline",
-        "timestamp": "2026-02-10 17:52:49"
+        "timestamp": "2026-02-06 23:10:32"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-06 23:10:42"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-06 23:19:12"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-06 23:19:22"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-06 23:34:52"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-06 23:35:02"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-06 23:57:32"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-06 23:57:42"
+      }
+    ],
+    "2026-02-07": [
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 06:22:45"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 06:22:55"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 08:16:15"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 08:16:25"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 08:28:05"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 08:28:15"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 10:42:21"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 10:42:31"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 11:37:21"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 11:37:31"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 12:03:21"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 12:03:31"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 12:12:21"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 22:26:22"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 22:31:32"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 22:31:52"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-07 22:32:12"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-07 22:32:22"
+      }
+    ],
+    "2026-02-08": [
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 00:50:52"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 00:51:02"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 01:27:33"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 01:27:43"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 01:35:33"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 01:35:43"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 03:16:53"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 03:17:03"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 03:27:43"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 03:27:53"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 03:32:13"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 03:32:23"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 04:24:13"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 04:24:23"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 05:01:53"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 05:02:03"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 05:51:23"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 05:51:33"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 06:11:23"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 06:11:33"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 06:19:03"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 06:19:13"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 06:24:53"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 06:25:03"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 06:57:53"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 06:58:03"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 08:18:54"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 08:19:04"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 10:45:04"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 11:14:14"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 11:40:04"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 11:40:14"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 11:40:24"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 18:56:25"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 19:06:25"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 19:06:35"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-08 19:35:25"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-08 19:35:35"
+      }
+    ],
+    "2026-02-09": [
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 00:06:26"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 00:06:36"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 00:54:56"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 00:55:06"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 01:12:56"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 01:13:06"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 01:13:26"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 01:13:36"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 01:21:36"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 01:21:46"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 03:20:26"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 03:20:36"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 03:31:26"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 03:31:36"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 04:40:46"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 04:40:56"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 04:41:26"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 04:41:36"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 04:43:06"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 04:43:16"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 06:56:47"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 06:56:57"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 07:24:17"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 07:24:27"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 07:24:57"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 15:20:28"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 15:37:58"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 15:38:08"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 15:53:18"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 15:53:28"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 17:50:08"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 20:57:09"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-09 21:59:49"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-09 21:59:59"
+      }
+    ],
+    "2026-02-10": [
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 00:33:59"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 00:34:09"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 00:48:09"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 00:48:19"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 01:40:39"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 01:40:49"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 01:43:09"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 01:43:19"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 01:56:39"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 01:56:49"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 02:50:00"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 02:50:10"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 02:51:10"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 02:51:20"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 03:27:40"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 03:27:50"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 03:44:30"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 03:44:40"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 07:32:10"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 15:20:21"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 16:02:41"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 16:02:51"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-10 17:52:52"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-10 19:13:46"
+      }
+    ],
+    "2026-02-11": [
+      {
+        "status": "offline",
+        "timestamp": "2026-02-11 03:27:46"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-11 03:27:56"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-11 03:45:46"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-11 03:45:56"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-11 06:42:16"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-11 06:42:26"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-11 07:24:16"
+      },
+      {
+        "status": "online",
+        "timestamp": "2026-02-11 07:24:26"
+      },
+      {
+        "status": "offline",
+        "timestamp": "2026-02-11 07:24:46"
       }
     ]
   }
