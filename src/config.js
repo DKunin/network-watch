@@ -4,9 +4,14 @@ const PORT = 3031;
 const SCAN_INTERVAL = 10000;
 const DB_FILE = "device_log.json";
 const SETTINGS_FILE = "notification_settings.json";
+const STATE_FILE = "device_state.json";
 const TELEGRAM_DEBOUNCE_INTERVAL = 5 * 60 * 1000;
 const NOTIFICATION_START_HOUR = 8;
 const NOTIFICATION_END_HOUR = 24;
+const PING_TIMEOUT_SECONDS = 2;
+const PING_CONCURRENCY = 5;
+const ONLINE_SUCCESS_THRESHOLD = 1;
+const OFFLINE_FAILURE_THRESHOLD = 2;
 
 function asBoolean(value) {
   return ["1", "true", "yes", "on"].includes(
@@ -21,8 +26,13 @@ module.exports = {
   SCAN_INTERVAL,
   DB_FILE,
   SETTINGS_FILE,
+  STATE_FILE,
   TELEGRAM_DEBOUNCE_INTERVAL,
   NOTIFICATION_START_HOUR,
   NOTIFICATION_END_HOUR,
+  PING_TIMEOUT_SECONDS,
+  PING_CONCURRENCY,
+  ONLINE_SUCCESS_THRESHOLD,
+  OFFLINE_FAILURE_THRESHOLD,
   IS_DEBUG,
 };

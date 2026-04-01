@@ -2,33 +2,70 @@
 
 const moment = require("moment");
 
-function calculateUptime(logEntries, date) {
-  let totalUptime = 0;
-  let lastOnlineTimestamp = null;
+const TIMESTAMP_FORMAT = "YYYY-MM-DD HH:mm:ss";
+const DATE_FORMAT = "YYYY-MM-DD";
 
-  logEntries.forEach((entry) => {
-    const entryTime = moment(entry.timestamp, "YYYY-MM-DD HH:mm:ss");
-
-    if (entry.status === "online") {
-      lastOnlineTimestamp = entryTime;
-    } else if (entry.status === "offline" && lastOnlineTimestamp) {
-      totalUptime += entryTime.diff(lastOnlineTimestamp, "seconds");
-      lastOnlineTimestamp = null;
-    }
-  });
-
-  if (lastOnlineTimestamp) {
-    if (date === moment().format("YYYY-MM-DD")) {
-      totalUptime += moment().diff(lastOnlineTimestamp, "seconds");
-    } else {
-      totalUptime += moment(`${date} 23:59:59`, "YYYY-MM-DD HH:mm:ss").diff(
-        lastOnlineTimestamp,
-        "seconds"
-      );
-    }
+function getSortedEvents(historyByDate) {
+  if (!historyByDate || typeof historyByDate !== "object") {
+    return [];
   }
 
-  return totalUptime;
+  return Object.keys(historyByDate)
+    .sort()
+    .flatMap((day) => historyByDate[day] || [])
+    .filter((entry) => entry && (entry.status === "online" || entry.status === "offline"))
+    .sort((left, right) => left.timestamp.localeCompare(right.timestamp));
+}
+
+function calculateUptime(historyByDate, date) {
+  const dayStart = moment(`${date} 00:00:00`, TIMESTAMP_FORMAT, true);
+  if (!dayStart.isValid()) {
+    return 0;
+  }
+
+  const currentDate = moment().format(DATE_FORMAT);
+  const dayEnd =
+    date === currentDate
+      ? moment()
+      : moment(`${date} 23:59:59`, TIMESTAMP_FORMAT, true);
+
+  if (!dayEnd.isValid() || dayEnd.isBefore(dayStart)) {
+    return 0;
+  }
+
+  const events = getSortedEvents(historyByDate);
+  let totalUptime = 0;
+  let currentState = "unknown";
+  let intervalStart = dayStart.clone();
+
+  for (const entry of events) {
+    const entryTime = moment(entry.timestamp, TIMESTAMP_FORMAT, true);
+    if (!entryTime.isValid()) {
+      continue;
+    }
+
+    if (entryTime.isBefore(dayStart)) {
+      currentState = entry.status;
+      continue;
+    }
+
+    if (entryTime.isAfter(dayEnd)) {
+      break;
+    }
+
+    if (currentState === "online") {
+      totalUptime += entryTime.diff(intervalStart, "seconds");
+    }
+
+    intervalStart = entryTime;
+    currentState = entry.status;
+  }
+
+  if (currentState === "online") {
+    totalUptime += dayEnd.diff(intervalStart, "seconds");
+  }
+
+  return Math.max(totalUptime, 0);
 }
 
 module.exports = { calculateUptime };

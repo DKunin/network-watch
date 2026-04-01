@@ -11,6 +11,8 @@ const devices = require("./src/devices");
 const {
   loadDeviceLog,
   saveDeviceLog,
+  loadDeviceState,
+  saveDeviceState,
   loadNotificationSettings,
   saveNotificationSettings,
 } = require("./src/storage");
@@ -43,18 +45,24 @@ const scanner = createScanner({
   notifier,
   debug: config.IS_DEBUG,
   initialDeviceLog: loadDeviceLog(config.DB_FILE),
+  initialDeviceState: loadDeviceState(config.STATE_FILE),
   saveDeviceLog: (deviceLog) => saveDeviceLog(config.DB_FILE, deviceLog),
+  saveDeviceState: (deviceState) => saveDeviceState(config.STATE_FILE, deviceState),
+  pingTimeoutSeconds: config.PING_TIMEOUT_SECONDS,
+  pingConcurrency: config.PING_CONCURRENCY,
+  onlineSuccessThreshold: config.ONLINE_SUCCESS_THRESHOLD,
+  offlineFailureThreshold: config.OFFLINE_FAILURE_THRESHOLD,
 });
 
 app.get("/uptime/:ip/:date", (req, res) => {
   const { ip, date } = req.params;
   const deviceLog = scanner.getDeviceLog();
 
-  if (!deviceLog[ip] || !deviceLog[ip][date]) {
+  if (!deviceLog[ip]) {
     return res.json({ error: "No data available for this device and date." });
   }
 
-  const totalUptime = calculateUptime(deviceLog[ip][date], date);
+  const totalUptime = calculateUptime(deviceLog[ip], date);
 
   return res.json({
     device: devices[ip]?.name || ip,
@@ -68,15 +76,12 @@ app.get("/weekly/:ip", (req, res) => {
   const { ip } = req.params;
   const deviceLog = scanner.getDeviceLog();
   const result = [];
-  const today = new Date();
+  const today = moment();
 
   for (let i = 6; i >= 0; i -= 1) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-    const dateString = date.toISOString().split("T")[0];
+    const dateString = today.clone().subtract(i, "days").format("YYYY-MM-DD");
 
-    const logEntries = deviceLog[ip]?.[dateString] || [];
-    const totalUptime = calculateUptime(logEntries, dateString);
+    const totalUptime = calculateUptime(deviceLog[ip], dateString);
     const uptimeHours = (totalUptime / 3600).toFixed(2);
 
     result.push({ date: dateString, uptime: parseFloat(uptimeHours) });

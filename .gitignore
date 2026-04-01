@@ -1,5 +1,8 @@
 device_log.json
+./device_log.json
+./device_log.*
 notification_settings.json
+device_state.json
 .env
 node_modules
 cronus.json

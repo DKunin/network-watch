@@ -36,9 +36,19 @@ function saveNotificationSettings(settingsFile, notificationsEnabled) {
   writeJsonFile(settingsFile, { notificationsEnabled });
 }
 
+function loadDeviceState(stateFile) {
+  return readJsonFile(stateFile, {});
+}
+
+function saveDeviceState(stateFile, deviceState) {
+  writeJsonFile(stateFile, deviceState);
+}
+
 module.exports = {
   loadDeviceLog,
   saveDeviceLog,
+  loadDeviceState,
+  saveDeviceState,
   loadNotificationSettings,
   saveNotificationSettings,
 };

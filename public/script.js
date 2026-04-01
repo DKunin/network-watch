@@ -1,5 +1,10 @@
 const { createApp } = Vue;
 
+const CONNECTION_STATES = {
+  ONLINE: "online",
+  OFFLINE: "offline",
+  UNKNOWN: "unknown",
+};
 const HOURS_IN_DAY = 24;
 const SECONDS_IN_DAY = 24 * 60 * 60;
 const getTodayString = () => {
@@ -64,6 +69,86 @@ function getDeviceName(device) {
   return "";
 }
 
+function normalizeConnectionState(state) {
+  if (state === true) {
+    return CONNECTION_STATES.ONLINE;
+  }
+
+  if (state === false) {
+    return CONNECTION_STATES.OFFLINE;
+  }
+
+  if (
+    state === CONNECTION_STATES.ONLINE ||
+    state === CONNECTION_STATES.OFFLINE ||
+    state === CONNECTION_STATES.UNKNOWN
+  ) {
+    return state;
+  }
+
+  return CONNECTION_STATES.UNKNOWN;
+}
+
+function getStateSortRank(state) {
+  switch (normalizeConnectionState(state)) {
+    case CONNECTION_STATES.ONLINE:
+      return 0;
+    case CONNECTION_STATES.UNKNOWN:
+      return 1;
+    case CONNECTION_STATES.OFFLINE:
+    default:
+      return 2;
+  }
+}
+
+function getStateLabel(state) {
+  switch (normalizeConnectionState(state)) {
+    case CONNECTION_STATES.ONLINE:
+      return "Online";
+    case CONNECTION_STATES.OFFLINE:
+      return "Offline";
+    case CONNECTION_STATES.UNKNOWN:
+    default:
+      return "Unknown";
+  }
+}
+
+function getStateBadgeClasses(state) {
+  switch (normalizeConnectionState(state)) {
+    case CONNECTION_STATES.ONLINE:
+      return "bg-emerald-100 text-emerald-700";
+    case CONNECTION_STATES.OFFLINE:
+      return "bg-rose-100 text-rose-700";
+    case CONNECTION_STATES.UNKNOWN:
+    default:
+      return "bg-amber-100 text-amber-700";
+  }
+}
+
+function getStateDotClasses(state) {
+  switch (normalizeConnectionState(state)) {
+    case CONNECTION_STATES.ONLINE:
+      return "bg-emerald-500";
+    case CONNECTION_STATES.OFFLINE:
+      return "bg-rose-500";
+    case CONNECTION_STATES.UNKNOWN:
+    default:
+      return "bg-amber-400";
+  }
+}
+
+function getHeroDotClasses(state) {
+  switch (normalizeConnectionState(state)) {
+    case CONNECTION_STATES.ONLINE:
+      return "bg-emerald-300 animate-pulse";
+    case CONNECTION_STATES.OFFLINE:
+      return "bg-rose-300";
+    case CONNECTION_STATES.UNKNOWN:
+    default:
+      return "bg-amber-300";
+  }
+}
+
 function normalizeDevicesMap(devices) {
   return Object.fromEntries(
     Object.entries(devices || {}).map(([ip, device]) => [ip, getDeviceName(device) || ip])
@@ -76,6 +161,11 @@ function normalizeStatusesMap(statuses, devices) {
       ip,
       {
         ...status,
+        state: normalizeConnectionState(status?.state ?? status?.currentState ?? status?.isOnline),
+        isOnline:
+          normalizeConnectionState(
+            status?.state ?? status?.currentState ?? status?.isOnline
+          ) === CONNECTION_STATES.ONLINE,
         name: getDeviceName(status?.name) || devices[ip] || ip,
       },
     ])
@@ -114,15 +204,24 @@ createApp({
 
     deviceRows() {
       return Object.entries(this.statuses)
-        .map(([ip, status]) => ({
-          ip,
-          name: status.name || getDeviceName(this.devices[ip]) || ip,
-          isOnline: Boolean(status.isOnline),
-          initials: getInitials(status.name || getDeviceName(this.devices[ip]) || ip),
-        }))
+        .map(([ip, status]) => {
+          const state = normalizeConnectionState(status.state);
+          const name = status.name || getDeviceName(this.devices[ip]) || ip;
+
+          return {
+            ip,
+            name,
+            state,
+            isOnline: state === CONNECTION_STATES.ONLINE,
+            stateLabel: getStateLabel(state),
+            badgeClasses: getStateBadgeClasses(state),
+            dotClasses: getStateDotClasses(state),
+            initials: getInitials(name),
+          };
+        })
         .sort((left, right) => {
-          if (left.isOnline !== right.isOnline) {
-            return Number(right.isOnline) - Number(left.isOnline);
+          if (getStateSortRank(left.state) !== getStateSortRank(right.state)) {
+            return getStateSortRank(left.state) - getStateSortRank(right.state);
           }
 
           return left.name.localeCompare(right.name);
@@ -134,11 +233,15 @@ createApp({
     },
 
     onlineCount() {
-      return this.deviceRows.filter((device) => device.isOnline).length;
+      return this.deviceRows.filter(
+        (device) => device.state === CONNECTION_STATES.ONLINE
+      ).length;
     },
 
     offlineCount() {
-      return Math.max(this.totalDevices - this.onlineCount, 0);
+      return this.deviceRows.filter(
+        (device) => device.state === CONNECTION_STATES.OFFLINE
+      ).length;
     },
 
     selectedDeviceLabel() {
@@ -151,6 +254,58 @@ createApp({
 
     selectedDeviceStatus() {
       return this.selectedDevice ? this.statuses[this.selectedDevice] || null : null;
+    },
+
+    selectedDeviceState() {
+      return normalizeConnectionState(this.selectedDeviceStatus?.state);
+    },
+
+    selectedDeviceSummary() {
+      if (!this.selectedDeviceStatus) {
+        return "Waiting for the first status snapshot";
+      }
+
+      if (this.selectedDeviceState === CONNECTION_STATES.UNKNOWN) {
+        return `${this.selectedDeviceLabel} is awaiting confirmation`;
+      }
+
+      return `${this.selectedDeviceLabel} is ${this.selectedDeviceState}`;
+    },
+
+    selectedDeviceBadgeLabel() {
+      if (!this.selectedDeviceStatus) {
+        return "Pending";
+      }
+
+      if (this.selectedDeviceState === CONNECTION_STATES.UNKNOWN) {
+        return "Awaiting confirmation";
+      }
+
+      return `${getStateLabel(this.selectedDeviceState)} now`;
+    },
+
+    selectedDeviceBadgeClasses() {
+      if (!this.selectedDeviceStatus) {
+        return "bg-slate-100 text-slate-500";
+      }
+
+      return getStateBadgeClasses(this.selectedDeviceState);
+    },
+
+    selectedDeviceDotClasses() {
+      if (!this.selectedDeviceStatus) {
+        return "bg-slate-400";
+      }
+
+      return getStateDotClasses(this.selectedDeviceState);
+    },
+
+    selectedDeviceHeroDotClasses() {
+      if (!this.selectedDeviceStatus) {
+        return "bg-white/60";
+      }
+
+      return getHeroDotClasses(this.selectedDeviceState);
     },
 
     weeklyAverageHours() {
