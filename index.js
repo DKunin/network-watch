@@ -86,7 +86,14 @@ app.get("/weekly/:ip", (req, res) => {
 });
 
 app.get("/devices", (req, res) => {
-  res.json(devices);
+  const deviceNames = Object.fromEntries(
+    Object.entries(devices).map(([ip, deviceConfig]) => [
+      ip,
+      deviceConfig?.name || ip,
+    ])
+  );
+
+  res.json(deviceNames);
 });
 
 app.get("/status", (req, res) => {

@@ -3,6 +3,13 @@
 module.exports = {
   // "192.168.28.203": { name: "Kir Laptop" },
   // "192.168.28.235": { name: "Work Laptop" },
+  "192.168.28.230": {
+    name: "Computer",
+    messages: {
+      online: "{name} is online.",
+      offline: "{name} left offline.",
+    },
+  },
   "192.168.28.40": {
     name: "Kir",
     messages: {
