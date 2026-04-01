@@ -5,8 +5,6 @@ const CONNECTION_STATES = {
   OFFLINE: "offline",
   UNKNOWN: "unknown",
 };
-const HOURS_IN_DAY = 24;
-const SECONDS_IN_DAY = 24 * 60 * 60;
 const getTodayString = () => {
   const now = new Date();
   const year = now.getFullYear();
@@ -38,10 +36,6 @@ function formatHours(hours) {
   const wholeHours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   return `${wholeHours}h ${String(minutes).padStart(2, "0")}m`;
-}
-
-function clamp(value, minimum, maximum) {
-  return Math.min(Math.max(value, minimum), maximum);
 }
 
 function getInitials(name) {
@@ -375,14 +369,6 @@ createApp({
       return this.worstDay ? formatHours(this.worstDay.uptime) : "--";
     },
 
-    formattedSelectedDate() {
-      return formatDate(this.selectedDate, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    },
-
     primaryUptimeValue() {
       if (this.isLoadingUptime && !this.result) {
         return "Updating...";
@@ -391,41 +377,53 @@ createApp({
       return this.result?.uptime_human_readable || "--:--:--";
     },
 
-    resultDescription() {
-      if (this.result) {
-        return `${this.selectedDeviceLabel} reached ${this.uptimePercentLabel} availability on ${this.formattedSelectedDate}.`;
-      }
-
-      if (this.isLoadingUptime) {
-        return "Collecting the latest uptime information for the selected device.";
-      }
-
-      if (this.uptimeError) {
-        return this.uptimeError;
-      }
-
-      return "Pick any monitored device to see its recorded uptime for the selected day.";
+    hasTrendData() {
+      return this.weeklyUptime.some((entry) => Number(entry.uptime || 0) > 0);
     },
 
-    uptimePercent() {
-      if (!this.result?.uptime_seconds) {
-        return 0;
+    trendEmptyStateText() {
+      if (this.isLoadingWeekly) {
+        return "Loading the last seven days of uptime.";
       }
 
-      return clamp((this.result.uptime_seconds / SECONDS_IN_DAY) * 100, 0, 100);
+      return "No uptime changes were recorded for the last seven days.";
     },
 
-    uptimePercentLabel() {
-      if (this.uptimePercent > 0 && this.uptimePercent < 1) {
-        return "<1%";
+    trendChartMax() {
+      const maxHours = Math.max(
+        ...this.weeklyUptime.map((entry) => Number(entry.uptime || 0)),
+        0
+      );
+
+      if (maxHours <= 1) {
+        return 1;
       }
 
-      return `${Math.round(this.uptimePercent)}%`;
+      if (maxHours <= 6) {
+        return Math.ceil(maxHours + 1);
+      }
+
+      if (maxHours <= 12) {
+        return Math.ceil(maxHours + 2);
+      }
+
+      return Math.min(24, Math.ceil(maxHours + 3));
     },
 
-    uptimePercentWidth() {
-      const minimumVisibleWidth = this.result ? 8 : 6;
-      return `${Math.max(this.uptimePercent, minimumVisibleWidth)}%`;
+    trendTickStep() {
+      if (this.trendChartMax <= 1) {
+        return 0.25;
+      }
+
+      if (this.trendChartMax <= 4) {
+        return 0.5;
+      }
+
+      if (this.trendChartMax <= 12) {
+        return 1;
+      }
+
+      return 2;
     },
 
     formattedLastUpdated() {
@@ -679,9 +677,14 @@ createApp({
         this.uptimeChart.destroy();
       }
 
+      if (!this.hasTrendData) {
+        this.uptimeChart = null;
+        return;
+      }
+
       const gradient = context.createLinearGradient(0, 0, 0, canvas.height || 320);
-      gradient.addColorStop(0, "rgba(20, 144, 122, 0.95)");
-      gradient.addColorStop(1, "rgba(15, 118, 110, 0.35)");
+      gradient.addColorStop(0, "rgba(20, 144, 122, 0.32)");
+      gradient.addColorStop(1, "rgba(15, 118, 110, 0.02)");
 
       const labels = this.weeklyUptime.map((entry) =>
         this.formatChartLabel(entry.date)
@@ -689,17 +692,23 @@ createApp({
       const values = this.weeklyUptime.map((entry) => Number(entry.uptime || 0));
 
       this.uptimeChart = new Chart(context, {
-        type: "bar",
+        type: "line",
         data: {
           labels,
           datasets: [
             {
               label: "Uptime (hours)",
               data: values,
+              borderColor: "#14907a",
               backgroundColor: gradient,
-              borderRadius: 999,
-              borderSkipped: false,
-              maxBarThickness: 28,
+              fill: true,
+              tension: 0.35,
+              borderWidth: 3,
+              pointRadius: 4,
+              pointHoverRadius: 5,
+              pointBackgroundColor: "#14907a",
+              pointBorderColor: "#ffffff",
+              pointBorderWidth: 2,
             },
           ],
         },
@@ -755,15 +764,21 @@ createApp({
             },
             y: {
               min: 0,
-              max: HOURS_IN_DAY,
+              max: this.trendChartMax,
               ticks: {
-                stepSize: 6,
+                stepSize: this.trendTickStep,
                 color: "#94a3b8",
                 font: {
                   family: "Manrope",
                   weight: "600",
                 },
-                callback: (value) => `${value}h`,
+                callback: (value) => {
+                  if (this.trendChartMax <= 1) {
+                    return `${Number(value).toFixed(2)}h`;
+                  }
+
+                  return `${value}h`;
+                },
               },
               border: {
                 display: false,
