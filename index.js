@@ -16,7 +16,7 @@ const {
   loadNotificationSettings,
   saveNotificationSettings,
 } = require("./src/storage");
-const { calculateUptime } = require("./src/uptime");
+const { calculateHourlyUptime, calculateUptime } = require("./src/uptime");
 const { TelegramNotifier } = require("./src/notifier");
 const { createScanner } = require("./src/scanner");
 
@@ -69,6 +69,21 @@ app.get("/uptime/:ip/:date", (req, res) => {
     date,
     uptime_seconds: totalUptime,
     uptime_human_readable: moment.utc(totalUptime * 1000).format("HH:mm:ss"),
+  });
+});
+
+app.get("/activity/:ip/:date", (req, res) => {
+  const { ip, date } = req.params;
+  const deviceLog = scanner.getDeviceLog();
+
+  if (!deviceLog[ip]) {
+    return res.json({ error: "No data available for this device and date." });
+  }
+
+  return res.json({
+    device: devices[ip]?.name || ip,
+    date,
+    hours: calculateHourlyUptime(deviceLog[ip], date),
   });
 });
 
