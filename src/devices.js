@@ -18,7 +18,14 @@ module.exports = {
     },
   },
   "192.168.28.22": {
-    name: "TV",
+    name: "Den TV",
+    messages: {
+      online: "✅ {name} is online. 📺",
+      offline: "❌ {name} is offline. 📺",
+    },
+  },
+  "192.168.28.50": {
+    name: "Kir's TV",
     messages: {
       online: "✅ {name} is online. 📺",
       offline: "❌ {name} is offline. 📺",

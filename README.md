@@ -8,3 +8,14 @@ This project monitors devices on your WiFi network and logs when they go online/
 - **Telegram Notifications**: Sends alerts when devices go online/offline.
 - **Web UI**: View uptime for specific devices on selected dates.
 - **Auto Deployment**: Automatically pulls the latest code and restarts the server on `git push`.
+
+## Настройка устройств
+
+Список отслеживаемых устройств хранится в `src/devices.js` и отдается клиентам через `GET /devices`. Сейчас настроены:
+
+- `192.168.28.230`: Computer.
+- `192.168.28.40`: Kir.
+- `192.168.28.22`: Den TV.
+- `192.168.28.50`: Kir's TV.
+
+Веб-интерфейс и мобильное приложение берут список устройств из API, поэтому отдельный список в клиентах обновлять не нужно.
