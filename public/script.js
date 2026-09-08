@@ -38,6 +38,60 @@ function formatHours(hours) {
   return `${wholeHours}h ${String(minutes).padStart(2, "0")}m`;
 }
 
+function formatDuration(totalSeconds) {
+  const numericSeconds = Number(totalSeconds);
+  if (!Number.isFinite(numericSeconds) || numericSeconds <= 0) {
+    return "0m";
+  }
+
+  const totalMinutes = Math.round(numericSeconds / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (!hours) {
+    return `${minutes}m`;
+  }
+
+  return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
+}
+
+function createEmptyHourlyActivity() {
+  return Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    active_seconds: 0,
+    active_minutes: 0,
+    active_ratio: 0,
+  }));
+}
+
+function normalizeHourlyActivity(hours) {
+  const buckets = createEmptyHourlyActivity();
+
+  if (!Array.isArray(hours)) {
+    return buckets;
+  }
+
+  hours.forEach((entry) => {
+    const hour = Number(entry?.hour);
+    if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
+      return;
+    }
+
+    const activeSeconds = Math.max(0, Number(entry.active_seconds) || 0);
+    const activeMinutes = Math.min(60, Math.max(0, Number(entry.active_minutes) || 0));
+    const activeRatio = Math.min(1, Math.max(0, Number(entry.active_ratio) || 0));
+
+    buckets[hour] = {
+      hour,
+      active_seconds: activeSeconds,
+      active_minutes: activeMinutes,
+      active_ratio: activeRatio,
+    };
+  });
+
+  return buckets;
+}
+
 function getInitials(name) {
   const chunks = String(name || "")
     .split(/\s+/)
@@ -172,13 +226,16 @@ createApp({
       devices: {},
       statuses: {},
       weeklyUptime: [],
+      hourlyActivity: createEmptyHourlyActivity(),
       selectedDevice: "",
       selectedDate: getTodayString(),
       notificationsEnabled: false,
       result: null,
       uptimeError: "",
+      activityError: "",
       isBootstrapping: true,
       isLoadingUptime: false,
+      isLoadingActivity: false,
       isLoadingWeekly: false,
       isRefreshingDashboard: false,
       isSavingNotifications: false,
@@ -377,6 +434,49 @@ createApp({
       return this.result?.uptime_human_readable || "--:--:--";
     },
 
+    activityDateLabel() {
+      return formatDate(this.selectedDate, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      });
+    },
+
+    activityTotalSeconds() {
+      return this.hourlyActivity.reduce(
+        (sum, entry) => sum + Number(entry.active_seconds || 0),
+        0
+      );
+    },
+
+    activityTotalLabel() {
+      return this.isLoadingActivity
+        ? "Updating..."
+        : formatDuration(this.activityTotalSeconds);
+    },
+
+    peakActivityHour() {
+      return this.hourlyActivity.reduce((peak, entry) =>
+        Number(entry.active_seconds || 0) > Number(peak.active_seconds || 0)
+          ? entry
+          : peak
+      );
+    },
+
+    peakActivityLabel() {
+      if (this.isLoadingActivity) {
+        return "Updating...";
+      }
+
+      if (!this.peakActivityHour?.active_seconds) {
+        return "--";
+      }
+
+      const hour = String(this.peakActivityHour.hour).padStart(2, "0");
+      const minutes = Math.round(this.peakActivityHour.active_minutes);
+      return `${hour} · ${minutes}m`;
+    },
+
     hasTrendData() {
       return this.weeklyUptime.some((entry) => Number(entry.uptime || 0) > 0);
     },
@@ -444,7 +544,11 @@ createApp({
         return;
       }
 
-      await Promise.all([this.fetchUptime(), this.fetchWeeklyUptime()]);
+      await Promise.all([
+        this.fetchUptime(),
+        this.fetchHourlyActivity(),
+        this.fetchWeeklyUptime(),
+      ]);
     },
 
     async selectedDate(newValue, oldValue) {
@@ -452,7 +556,7 @@ createApp({
         return;
       }
 
-      await this.fetchUptime();
+      await Promise.all([this.fetchUptime(), this.fetchHourlyActivity()]);
     },
   },
 
@@ -481,7 +585,11 @@ createApp({
         ]);
 
         if (this.selectedDevice) {
-          await Promise.all([this.fetchUptime(), this.fetchWeeklyUptime()]);
+          await Promise.all([
+            this.fetchUptime(),
+            this.fetchHourlyActivity(),
+            this.fetchWeeklyUptime(),
+          ]);
         }
       } finally {
         this.isBootstrapping = false;
@@ -560,6 +668,41 @@ createApp({
         this.uptimeError = "An error occurred while fetching the uptime.";
       } finally {
         this.isLoadingUptime = false;
+      }
+    },
+
+    async fetchHourlyActivity() {
+      if (!this.selectedDevice || !this.selectedDate) {
+        this.hourlyActivity = createEmptyHourlyActivity();
+        this.activityError = "Choose both a device and a date.";
+        return;
+      }
+
+      this.isLoadingActivity = true;
+
+      try {
+        const response = await fetch(
+          `/activity/${this.selectedDevice}/${this.selectedDate}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to load hourly activity.");
+        }
+
+        const data = await response.json();
+        if (data.error) {
+          this.hourlyActivity = createEmptyHourlyActivity();
+          this.activityError = data.error;
+          return;
+        }
+
+        this.hourlyActivity = normalizeHourlyActivity(data.hours);
+        this.activityError = "";
+      } catch (error) {
+        console.error("Error fetching hourly activity:", error);
+        this.hourlyActivity = createEmptyHourlyActivity();
+        this.activityError = "An error occurred while fetching hourly activity.";
+      } finally {
+        this.isLoadingActivity = false;
       }
     },
 
@@ -647,6 +790,7 @@ createApp({
         await Promise.all([
           this.fetchCurrentStatus(),
           this.fetchUptime(),
+          this.fetchHourlyActivity(),
           this.fetchWeeklyUptime(),
         ]);
       } finally {
@@ -660,6 +804,34 @@ createApp({
 
     formatChartLabel(dateString) {
       return formatDate(dateString, { weekday: "short", day: "numeric" });
+    },
+
+    activityCellStyle(entry) {
+      const ratio = Math.min(1, Math.max(0, Number(entry.active_ratio) || 0));
+      if (!ratio) {
+        return {};
+      }
+
+      const start = [59, 130, 172];
+      const end = [45, 201, 151];
+      const color = start.map((channel, index) =>
+        Math.round(channel + (end[index] - channel) * ratio)
+      );
+      const alpha = 0.5 + ratio * 0.45;
+
+      return {
+        "--activity-color": `rgba(${color.join(", ")}, ${alpha})`,
+        "--activity-border-color": `rgba(${color.join(", ")}, ${Math.min(
+          1,
+          alpha + 0.08
+        )})`,
+      };
+    },
+
+    activityCellLabel(entry) {
+      const hour = String(entry.hour).padStart(2, "0");
+      const minutes = Math.round(Number(entry.active_minutes) || 0);
+      return `${hour}:00, ${minutes} active ${minutes === 1 ? "minute" : "minutes"}`;
     },
 
     renderChart() {
