@@ -92,19 +92,6 @@ function normalizeHourlyActivity(hours) {
   return buckets;
 }
 
-function getInitials(name) {
-  const chunks = String(name || "")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2);
-
-  if (!chunks.length) {
-    return "--";
-  }
-
-  return chunks.map((chunk) => chunk[0].toUpperCase()).join("");
-}
-
 function getDeviceName(device) {
   if (typeof device === "string") {
     return device;
@@ -137,18 +124,6 @@ function normalizeConnectionState(state) {
   return CONNECTION_STATES.UNKNOWN;
 }
 
-function getStateSortRank(state) {
-  switch (normalizeConnectionState(state)) {
-    case CONNECTION_STATES.ONLINE:
-      return 0;
-    case CONNECTION_STATES.UNKNOWN:
-      return 1;
-    case CONNECTION_STATES.OFFLINE:
-    default:
-      return 2;
-  }
-}
-
 function getStateLabel(state) {
   switch (normalizeConnectionState(state)) {
     case CONNECTION_STATES.ONLINE:
@@ -158,42 +133,6 @@ function getStateLabel(state) {
     case CONNECTION_STATES.UNKNOWN:
     default:
       return "Unknown";
-  }
-}
-
-function getStateBadgeClasses(state) {
-  switch (normalizeConnectionState(state)) {
-    case CONNECTION_STATES.ONLINE:
-      return "bg-emerald-100 text-emerald-700";
-    case CONNECTION_STATES.OFFLINE:
-      return "bg-rose-100 text-rose-700";
-    case CONNECTION_STATES.UNKNOWN:
-    default:
-      return "bg-amber-100 text-amber-700";
-  }
-}
-
-function getStateDotClasses(state) {
-  switch (normalizeConnectionState(state)) {
-    case CONNECTION_STATES.ONLINE:
-      return "bg-emerald-500";
-    case CONNECTION_STATES.OFFLINE:
-      return "bg-rose-500";
-    case CONNECTION_STATES.UNKNOWN:
-    default:
-      return "bg-amber-400";
-  }
-}
-
-function getHeroDotClasses(state) {
-  switch (normalizeConnectionState(state)) {
-    case CONNECTION_STATES.ONLINE:
-      return "bg-emerald-300 animate-pulse";
-    case CONNECTION_STATES.OFFLINE:
-      return "bg-rose-300";
-    case CONNECTION_STATES.UNKNOWN:
-    default:
-      return "bg-amber-300";
   }
 }
 
@@ -210,10 +149,6 @@ function normalizeStatusesMap(statuses, devices) {
       {
         ...status,
         state: normalizeConnectionState(status?.state ?? status?.currentState ?? status?.isOnline),
-        isOnline:
-          normalizeConnectionState(
-            status?.state ?? status?.currentState ?? status?.isOnline
-          ) === CONNECTION_STATES.ONLINE,
         name: getDeviceName(status?.name) || devices[ip] || ip,
       },
     ])
@@ -229,16 +164,11 @@ createApp({
       hourlyActivity: createEmptyHourlyActivity(),
       selectedDevice: "",
       selectedDate: getTodayString(),
-      notificationsEnabled: false,
-      result: null,
-      uptimeError: "",
       activityError: "",
       isBootstrapping: true,
-      isLoadingUptime: false,
       isLoadingActivity: false,
       isLoadingWeekly: false,
       isRefreshingDashboard: false,
-      isSavingNotifications: false,
       lastUpdatedAt: null,
       refreshTimer: null,
       uptimeChart: null,
@@ -254,45 +184,20 @@ createApp({
     },
 
     deviceRows() {
-      return Object.entries(this.statuses)
-        .map(([ip, status]) => {
-          const state = normalizeConnectionState(status.state);
-          const name = status.name || getDeviceName(this.devices[ip]) || ip;
+      return this.deviceOptions.map(({ ip, name }) => {
+        const state = normalizeConnectionState(this.statuses[ip]?.state);
 
-          return {
-            ip,
-            name,
-            state,
-            isOnline: state === CONNECTION_STATES.ONLINE,
-            stateLabel: getStateLabel(state),
-            badgeClasses: getStateBadgeClasses(state),
-            dotClasses: getStateDotClasses(state),
-            initials: getInitials(name),
-          };
-        })
-        .sort((left, right) => {
-          if (getStateSortRank(left.state) !== getStateSortRank(right.state)) {
-            return getStateSortRank(left.state) - getStateSortRank(right.state);
-          }
-
-          return left.name.localeCompare(right.name);
-        });
+        return {
+          ip,
+          name,
+          state,
+          stateLabel: getStateLabel(state),
+        };
+      });
     },
 
     totalDevices() {
       return this.deviceOptions.length;
-    },
-
-    onlineCount() {
-      return this.deviceRows.filter(
-        (device) => device.state === CONNECTION_STATES.ONLINE
-      ).length;
-    },
-
-    offlineCount() {
-      return this.deviceRows.filter(
-        (device) => device.state === CONNECTION_STATES.OFFLINE
-      ).length;
     },
 
     selectedDeviceLabel() {
@@ -301,62 +206,6 @@ createApp({
         this.selectedDevice ||
         "Choose a device"
       );
-    },
-
-    selectedDeviceStatus() {
-      return this.selectedDevice ? this.statuses[this.selectedDevice] || null : null;
-    },
-
-    selectedDeviceState() {
-      return normalizeConnectionState(this.selectedDeviceStatus?.state);
-    },
-
-    selectedDeviceSummary() {
-      if (!this.selectedDeviceStatus) {
-        return "Waiting for the first status snapshot";
-      }
-
-      if (this.selectedDeviceState === CONNECTION_STATES.UNKNOWN) {
-        return `${this.selectedDeviceLabel} is awaiting confirmation`;
-      }
-
-      return `${this.selectedDeviceLabel} is ${this.selectedDeviceState}`;
-    },
-
-    selectedDeviceBadgeLabel() {
-      if (!this.selectedDeviceStatus) {
-        return "Pending";
-      }
-
-      if (this.selectedDeviceState === CONNECTION_STATES.UNKNOWN) {
-        return "Awaiting confirmation";
-      }
-
-      return `${getStateLabel(this.selectedDeviceState)} now`;
-    },
-
-    selectedDeviceBadgeClasses() {
-      if (!this.selectedDeviceStatus) {
-        return "bg-slate-100 text-slate-500";
-      }
-
-      return getStateBadgeClasses(this.selectedDeviceState);
-    },
-
-    selectedDeviceDotClasses() {
-      if (!this.selectedDeviceStatus) {
-        return "bg-slate-400";
-      }
-
-      return getStateDotClasses(this.selectedDeviceState);
-    },
-
-    selectedDeviceHeroDotClasses() {
-      if (!this.selectedDeviceStatus) {
-        return "bg-white/60";
-      }
-
-      return getHeroDotClasses(this.selectedDeviceState);
     },
 
     weeklyAverageHours() {
@@ -426,22 +275,6 @@ createApp({
       return this.worstDay ? formatHours(this.worstDay.uptime) : "--";
     },
 
-    primaryUptimeValue() {
-      if (this.isLoadingUptime && !this.result) {
-        return "Updating...";
-      }
-
-      return this.result?.uptime_human_readable || "--:--:--";
-    },
-
-    activityDateLabel() {
-      return formatDate(this.selectedDate, {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-      });
-    },
-
     activityTotalSeconds() {
       return this.hourlyActivity.reduce(
         (sum, entry) => sum + Number(entry.active_seconds || 0),
@@ -507,7 +340,7 @@ createApp({
         return Math.ceil(maxHours + 2);
       }
 
-      return Math.min(24, Math.ceil(maxHours + 3));
+      return Math.min(25, Math.ceil(maxHours + 1));
     },
 
     trendTickStep() {
@@ -545,7 +378,6 @@ createApp({
       }
 
       await Promise.all([
-        this.fetchUptime(),
         this.fetchHourlyActivity(),
         this.fetchWeeklyUptime(),
       ]);
@@ -556,7 +388,7 @@ createApp({
         return;
       }
 
-      await Promise.all([this.fetchUptime(), this.fetchHourlyActivity()]);
+      await this.fetchHourlyActivity();
     },
   },
 
@@ -580,13 +412,11 @@ createApp({
       try {
         await Promise.all([
           this.loadDevices(),
-          this.loadNotificationSetting(),
           this.fetchCurrentStatus(),
         ]);
 
         if (this.selectedDevice) {
           await Promise.all([
-            this.fetchUptime(),
             this.fetchHourlyActivity(),
             this.fetchWeeklyUptime(),
           ]);
@@ -630,44 +460,6 @@ createApp({
         this.lastUpdatedAt = new Date();
       } catch (error) {
         console.error("Error fetching current status:", error);
-      }
-    },
-
-    async fetchUptime() {
-      if (!this.selectedDevice || !this.selectedDate) {
-        this.result = null;
-        this.uptimeError = "Choose both a device and a date.";
-        return;
-      }
-
-      this.isLoadingUptime = true;
-
-      try {
-        const response = await fetch(
-          `/uptime/${this.selectedDevice}/${this.selectedDate}`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to load uptime.");
-        }
-
-        const data = await response.json();
-        if (data.error) {
-          this.result = null;
-          this.uptimeError = data.error;
-          return;
-        }
-
-        this.result = {
-          ...data,
-          device: getDeviceName(data.device) || this.devices[this.selectedDevice] || this.selectedDevice,
-        };
-        this.uptimeError = "";
-      } catch (error) {
-        console.error("Error fetching uptime:", error);
-        this.result = null;
-        this.uptimeError = "An error occurred while fetching the uptime.";
-      } finally {
-        this.isLoadingUptime = false;
       }
     },
 
@@ -733,52 +525,6 @@ createApp({
       }
     },
 
-    async loadNotificationSetting() {
-      try {
-        const response = await fetch("/notifications");
-        if (!response.ok) {
-          throw new Error("Failed to load notification settings.");
-        }
-
-        const data = await response.json();
-        this.notificationsEnabled = Boolean(data.enabled);
-      } catch (error) {
-        console.error("Error loading notification setting:", error);
-        this.notificationsEnabled = false;
-      }
-    },
-
-    async toggleNotifications() {
-      if (this.isSavingNotifications) {
-        return;
-      }
-
-      const previousValue = this.notificationsEnabled;
-      const nextValue = !previousValue;
-      this.notificationsEnabled = nextValue;
-      this.isSavingNotifications = true;
-
-      try {
-        const response = await fetch("/notifications", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enabled: nextValue }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to update notifications.");
-        }
-
-        const data = await response.json();
-        this.notificationsEnabled = Boolean(data.enabled);
-      } catch (error) {
-        console.error("Error updating notification setting:", error);
-        this.notificationsEnabled = previousValue;
-      } finally {
-        this.isSavingNotifications = false;
-      }
-    },
-
     async refreshDashboard() {
       if (!this.selectedDevice) {
         return;
@@ -789,7 +535,6 @@ createApp({
       try {
         await Promise.all([
           this.fetchCurrentStatus(),
-          this.fetchUptime(),
           this.fetchHourlyActivity(),
           this.fetchWeeklyUptime(),
         ]);
@@ -812,12 +557,12 @@ createApp({
         return {};
       }
 
-      const start = [59, 130, 172];
-      const end = [45, 201, 151];
+      const start = [34, 103, 145];
+      const end = [92, 231, 189];
       const color = start.map((channel, index) =>
         Math.round(channel + (end[index] - channel) * ratio)
       );
-      const alpha = 0.5 + ratio * 0.45;
+      const alpha = 0.68 + ratio * 0.3;
 
       return {
         "--activity-color": `rgba(${color.join(", ")}, ${alpha})`,
@@ -855,8 +600,8 @@ createApp({
       }
 
       const gradient = context.createLinearGradient(0, 0, 0, canvas.height || 320);
-      gradient.addColorStop(0, "rgba(20, 144, 122, 0.32)");
-      gradient.addColorStop(1, "rgba(15, 118, 110, 0.02)");
+      gradient.addColorStop(0, "rgba(92, 231, 189, 0.28)");
+      gradient.addColorStop(1, "rgba(92, 231, 189, 0.015)");
 
       const labels = this.weeklyUptime.map((entry) =>
         this.formatChartLabel(entry.date)
@@ -871,15 +616,15 @@ createApp({
             {
               label: "Uptime (hours)",
               data: values,
-              borderColor: "#14907a",
+              borderColor: "#5ce7bd",
               backgroundColor: gradient,
               fill: true,
               tension: 0.35,
               borderWidth: 3,
               pointRadius: 4,
               pointHoverRadius: 5,
-              pointBackgroundColor: "#14907a",
-              pointBorderColor: "#ffffff",
+              pointBackgroundColor: "#5ce7bd",
+              pointBorderColor: "#0d1b2d",
               pointBorderWidth: 2,
             },
           ],
@@ -896,7 +641,7 @@ createApp({
             },
             tooltip: {
               displayColors: false,
-              backgroundColor: "#0f172a",
+              backgroundColor: "#050c16",
               padding: 12,
               titleFont: {
                 family: "Manrope",
@@ -927,7 +672,7 @@ createApp({
                 display: false,
               },
               ticks: {
-                color: "#64748b",
+                color: "#9fb0c8",
                 font: {
                   family: "Manrope",
                   weight: "600",
@@ -939,12 +684,16 @@ createApp({
               max: this.trendChartMax,
               ticks: {
                 stepSize: this.trendTickStep,
-                color: "#94a3b8",
+                color: "#71839e",
                 font: {
                   family: "Manrope",
                   weight: "600",
                 },
                 callback: (value) => {
+                  if (Number(value) > 24) {
+                    return "";
+                  }
+
                   if (this.trendChartMax <= 1) {
                     return `${Number(value).toFixed(2)}h`;
                   }
@@ -956,7 +705,7 @@ createApp({
                 display: false,
               },
               grid: {
-                color: "rgba(148, 163, 184, 0.15)",
+                color: "rgba(132, 159, 194, 0.14)",
                 drawTicks: false,
               },
             },
