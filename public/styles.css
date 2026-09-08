@@ -489,6 +489,7 @@ button:disabled {
 }
 
 .activity-hour-cell {
+  position: relative;
   display: block;
   width: 100%;
   aspect-ratio: 1.28 / 1;
@@ -502,6 +503,45 @@ button:disabled {
   transition-timing-function: ease-out;
 }
 
+.activity-hour-cell::before {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  z-index: 10;
+  width: max-content;
+  max-width: 160px;
+  padding: 7px 9px;
+  border: 1px solid rgba(141, 164, 196, 0.3);
+  border-radius: 8px;
+  background: #071321;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
+  color: var(--text);
+  content: attr(data-tooltip);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition-property: opacity, transform, visibility;
+  transition-duration: 140ms;
+  transition-timing-function: ease-out;
+  visibility: hidden;
+  white-space: nowrap;
+}
+
+.activity-hour:nth-child(6n + 1) .activity-hour-cell::before {
+  left: 0;
+  transform: translateY(4px);
+}
+
+.activity-hour:nth-child(6n) .activity-hour-cell::before {
+  right: 0;
+  left: auto;
+  transform: translateY(4px);
+}
+
 .activity-hour-cell-active {
   border-color: var(--activity-border-color);
   background: var(--activity-color);
@@ -510,11 +550,27 @@ button:disabled {
     0 7px 18px -14px var(--activity-border-color);
 }
 
-.activity-hour-cell:hover {
+.activity-hour-cell:hover,
+.activity-hour-cell:focus-visible {
   z-index: 1;
   border-color: rgba(255, 255, 255, 0.34);
   transform: translateY(-2px);
   box-shadow: 0 10px 22px -14px rgba(0, 0, 0, 0.85);
+  outline: none;
+}
+
+.activity-hour-cell:hover::before,
+.activity-hour-cell:focus-visible::before {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
+}
+
+.activity-hour:nth-child(6n + 1) .activity-hour-cell:hover::before,
+.activity-hour:nth-child(6n + 1) .activity-hour-cell:focus-visible::before,
+.activity-hour:nth-child(6n) .activity-hour-cell:hover::before,
+.activity-hour:nth-child(6n) .activity-hour-cell:focus-visible::before {
+  transform: translateY(0);
 }
 
 .activity-scale {

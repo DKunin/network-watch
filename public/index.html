@@ -138,7 +138,8 @@
                   :class="{ 'activity-hour-cell-active': entry.active_seconds > 0 }"
                   :style="activityCellStyle(entry)"
                   :aria-label="activityCellLabel(entry)"
-                  :title="activityCellLabel(entry)"
+                  :data-tooltip="activityCellTooltip(entry)"
+                  tabindex="0"
                   role="img"
                 ></span>
               </div>

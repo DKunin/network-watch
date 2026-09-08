@@ -579,6 +579,12 @@ createApp({
       return `${hour}:00, ${minutes} active ${minutes === 1 ? "minute" : "minutes"}`;
     },
 
+    activityCellTooltip(entry) {
+      const hour = String(entry.hour).padStart(2, "0");
+      const minutes = Math.round(Number(entry.active_minutes) || 0);
+      return `${hour}:00 · ${minutes} min online`;
+    },
+
     renderChart() {
       const canvas = this.$refs.uptimeChart;
       if (!canvas) {
