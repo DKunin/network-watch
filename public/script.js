@@ -1,4 +1,4 @@
-const { createApp } = Vue;
+const { createApp, markRaw } = Vue;
 
 const CONNECTION_STATES = {
   ONLINE: "online",
@@ -172,6 +172,8 @@ createApp({
       lastUpdatedAt: null,
       refreshTimer: null,
       uptimeChart: null,
+      activityRequestId: 0,
+      weeklyRequestId: 0,
     };
   },
 
@@ -464,23 +466,30 @@ createApp({
     },
 
     async fetchHourlyActivity() {
-      if (!this.selectedDevice || !this.selectedDate) {
+      const requestId = ++this.activityRequestId;
+      const device = this.selectedDevice;
+      const date = this.selectedDate;
+
+      if (!device || !date) {
         this.hourlyActivity = createEmptyHourlyActivity();
         this.activityError = "Choose both a device and a date.";
+        this.isLoadingActivity = false;
         return;
       }
 
       this.isLoadingActivity = true;
 
       try {
-        const response = await fetch(
-          `/activity/${this.selectedDevice}/${this.selectedDate}`
-        );
+        const response = await fetch(`/activity/${device}/${date}`);
         if (!response.ok) {
           throw new Error("Failed to load hourly activity.");
         }
 
         const data = await response.json();
+        if (requestId !== this.activityRequestId || device !== this.selectedDevice) {
+          return;
+        }
+
         if (data.error) {
           this.hourlyActivity = createEmptyHourlyActivity();
           this.activityError = data.error;
@@ -490,17 +499,27 @@ createApp({
         this.hourlyActivity = normalizeHourlyActivity(data.hours);
         this.activityError = "";
       } catch (error) {
+        if (requestId !== this.activityRequestId || device !== this.selectedDevice) {
+          return;
+        }
+
         console.error("Error fetching hourly activity:", error);
         this.hourlyActivity = createEmptyHourlyActivity();
         this.activityError = "An error occurred while fetching hourly activity.";
       } finally {
-        this.isLoadingActivity = false;
+        if (requestId === this.activityRequestId) {
+          this.isLoadingActivity = false;
+        }
       }
     },
 
     async fetchWeeklyUptime() {
-      if (!this.selectedDevice) {
+      const requestId = ++this.weeklyRequestId;
+      const device = this.selectedDevice;
+
+      if (!device) {
         this.weeklyUptime = [];
+        this.isLoadingWeekly = false;
         this.renderChart();
         return;
       }
@@ -508,20 +527,38 @@ createApp({
       this.isLoadingWeekly = true;
 
       try {
-        const response = await fetch(`/weekly/${this.selectedDevice}`);
+        const response = await fetch(`/weekly/${device}`);
         if (!response.ok) {
           throw new Error("Failed to load weekly uptime.");
         }
 
         const data = await response.json();
+        if (requestId !== this.weeklyRequestId || device !== this.selectedDevice) {
+          return;
+        }
+
         this.weeklyUptime = Array.isArray(data) ? data : [];
-        this.$nextTick(() => this.renderChart());
+        this.$nextTick(() => {
+          if (requestId === this.weeklyRequestId && device === this.selectedDevice) {
+            this.renderChart();
+          }
+        });
       } catch (error) {
+        if (requestId !== this.weeklyRequestId || device !== this.selectedDevice) {
+          return;
+        }
+
         console.error("Error fetching weekly uptime:", error);
         this.weeklyUptime = [];
-        this.$nextTick(() => this.renderChart());
+        this.$nextTick(() => {
+          if (requestId === this.weeklyRequestId && device === this.selectedDevice) {
+            this.renderChart();
+          }
+        });
       } finally {
-        this.isLoadingWeekly = false;
+        if (requestId === this.weeklyRequestId) {
+          this.isLoadingWeekly = false;
+        }
       }
     },
 
@@ -596,12 +633,14 @@ createApp({
         return;
       }
 
-      if (this.uptimeChart) {
-        this.uptimeChart.destroy();
-      }
-
       if (!this.hasTrendData) {
-        this.uptimeChart = null;
+        if (this.uptimeChart) {
+          this.uptimeChart.stop();
+          this.uptimeChart.data.labels = [];
+          this.uptimeChart.data.datasets[0].data = [];
+          this.uptimeChart.update("none");
+        }
+
         return;
       }
 
@@ -614,7 +653,19 @@ createApp({
       );
       const values = this.weeklyUptime.map((entry) => Number(entry.uptime || 0));
 
-      this.uptimeChart = new Chart(context, {
+      if (this.uptimeChart) {
+        this.uptimeChart.stop();
+        this.uptimeChart.data.labels = labels;
+        this.uptimeChart.data.datasets[0].data = values;
+        this.uptimeChart.data.datasets[0].backgroundColor = gradient;
+        this.uptimeChart.options.scales.y.max = this.trendChartMax;
+        this.uptimeChart.options.scales.y.ticks.stepSize = this.trendTickStep;
+        this.uptimeChart.resize();
+        this.uptimeChart.update();
+        return;
+      }
+
+      this.uptimeChart = markRaw(new Chart(context, {
         type: "line",
         data: {
           labels,
@@ -717,7 +768,7 @@ createApp({
             },
           },
         },
-      });
+      }));
     },
   },
 }).mount("#app");
