@@ -98,14 +98,40 @@
                 <p>{{ selectedDeviceLabel }}</p>
               </div>
 
-              <label class="date-control" for="date">
-                <span class="sr-only">Day to inspect</span>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <rect x="3" y="5" width="18" height="16" rx="2" />
-                  <path d="M16 3v4M8 3v4M3 10h18" />
-                </svg>
-                <input id="date" v-model="selectedDate" type="date" />
-              </label>
+              <div class="date-navigation" role="group" aria-label="Day to inspect">
+                <button
+                  type="button"
+                  class="date-navigation-button"
+                  aria-label="Previous day"
+                  :disabled="!selectedDate"
+                  @click="changeSelectedDate(-1)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </button>
+
+                <label class="date-control" for="date">
+                  <span class="sr-only">Day to inspect</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="16" rx="2" />
+                    <path d="M16 3v4M8 3v4M3 10h18" />
+                  </svg>
+                  <input id="date" v-model="selectedDate" type="date" />
+                </label>
+
+                <button
+                  type="button"
+                  class="date-navigation-button"
+                  aria-label="Next day"
+                  :disabled="!selectedDate"
+                  @click="changeSelectedDate(1)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div class="activity-metrics">

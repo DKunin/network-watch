@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --watch index.js --watch src --watch public --ext js,html,css index.js"
+    "dev": "nodemon --watch index.js --watch src --watch public --ext js,html,css index.js",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",

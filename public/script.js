@@ -26,6 +26,30 @@ function formatDate(dateString, options) {
   return new Intl.DateTimeFormat(undefined, options).format(date);
 }
 
+function shiftDateString(dateString, dayOffset) {
+  const parts = String(dateString || "").split("-").map(Number);
+  if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) {
+    return "";
+  }
+
+  const [year, month, day] = parts;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return "";
+  }
+
+  date.setUTCDate(date.getUTCDate() + dayOffset);
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 function formatHours(hours) {
   const numericHours = Number(hours);
   if (!Number.isFinite(numericHours)) {
@@ -582,6 +606,13 @@ createApp({
 
     selectDevice(ip) {
       this.selectedDevice = ip;
+    },
+
+    changeSelectedDate(dayOffset) {
+      const nextDate = shiftDateString(this.selectedDate, dayOffset);
+      if (nextDate) {
+        this.selectedDate = nextDate;
+      }
     },
 
     formatChartLabel(dateString) {
