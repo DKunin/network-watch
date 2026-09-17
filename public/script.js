@@ -5,6 +5,20 @@ const CONNECTION_STATES = {
   OFFLINE: "offline",
   UNKNOWN: "unknown",
 };
+
+async function authenticatedFetch(path, options) {
+  const response = await fetch(`/api${path}`, options);
+
+  if (response.status === 401) {
+    const loginURL = new URL("https://auth.kunini.ru/login");
+    loginURL.searchParams.set("return_to", window.location.href);
+    window.location.assign(loginURL);
+    throw new Error("Authentication required.");
+  }
+
+  return response;
+}
+
 const getTodayString = () => {
   const now = new Date();
   const year = now.getFullYear();
@@ -458,7 +472,7 @@ createApp({
 
     async loadDevices() {
       try {
-        const response = await fetch("/devices");
+        const response = await authenticatedFetch("/devices");
         if (!response.ok) {
           throw new Error("Failed to load devices.");
         }
@@ -477,7 +491,7 @@ createApp({
 
     async fetchCurrentStatus() {
       try {
-        const response = await fetch("/status");
+        const response = await authenticatedFetch("/status");
         if (!response.ok) {
           throw new Error("Failed to load status.");
         }
@@ -504,7 +518,7 @@ createApp({
       this.isLoadingActivity = true;
 
       try {
-        const response = await fetch(`/activity/${device}/${date}`);
+        const response = await authenticatedFetch(`/activity/${device}/${date}`);
         if (!response.ok) {
           throw new Error("Failed to load hourly activity.");
         }
@@ -551,7 +565,7 @@ createApp({
       this.isLoadingWeekly = true;
 
       try {
-        const response = await fetch(`/weekly/${device}`);
+        const response = await authenticatedFetch(`/weekly/${device}`);
         if (!response.ok) {
           throw new Error("Failed to load weekly uptime.");
         }

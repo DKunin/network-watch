@@ -1,6 +1,7 @@
 "use strict";
 
 const PORT = 3031;
+const HOST = "127.0.0.1";
 const SCAN_INTERVAL = 10000;
 const DB_FILE = "device_log.json";
 const SETTINGS_FILE = "notification_settings.json";
@@ -23,6 +24,7 @@ const IS_DEBUG = asBoolean(process.env.DEBUG);
 
 module.exports = {
   PORT,
+  HOST,
   SCAN_INTERVAL,
   DB_FILE,
   SETTINGS_FILE,

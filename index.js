@@ -3,7 +3,6 @@
 require("dotenv").config();
 
 const express = require("express");
-const cors = require("cors");
 const moment = require("moment");
 
 const config = require("./src/config");
@@ -19,11 +18,15 @@ const {
 const { calculateHourlyUptime, calculateUptime } = require("./src/uptime");
 const { TelegramNotifier } = require("./src/notifier");
 const { createScanner } = require("./src/scanner");
+const { requireProxyIdentity } = require("./src/auth");
 
 const app = express();
 
-app.use(cors());
 app.use(express.json());
+app.get("/healthz", (_req, res) => {
+  res.json({ ok: true });
+});
+app.use(requireProxyIdentity);
 app.use(express.static("public"));
 
 const state = {
@@ -137,8 +140,8 @@ app.post("/notifications", (req, res) => {
   return res.json({ enabled: state.notificationsEnabled });
 });
 
-app.listen(config.PORT, () => {
-  console.log(`Server running on http://localhost:${config.PORT}`);
+app.listen(config.PORT, config.HOST, () => {
+  console.log(`Server running on http://${config.HOST}:${config.PORT}`);
 });
 
 setInterval(() => {

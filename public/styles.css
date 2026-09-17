@@ -136,7 +136,8 @@ button:disabled {
   font-weight: 600;
 }
 
-.refresh-button {
+.refresh-button,
+.logout-link {
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -149,17 +150,20 @@ button:disabled {
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
+  text-decoration: none;
   transition-property: background-color, border-color, transform;
   transition-duration: 160ms;
   transition-timing-function: ease-out;
 }
 
-.refresh-button:hover:not(:disabled) {
+.refresh-button:hover:not(:disabled),
+.logout-link:hover {
   border-color: var(--border-strong);
   background: var(--panel-hover);
 }
 
 .refresh-button:active,
+.logout-link:active,
 .device-row:active {
   transform: scale(0.98);
 }
@@ -845,6 +849,11 @@ button:disabled {
     padding: 0 11px;
   }
 
+  .logout-link {
+    min-height: 40px;
+    padding: 10px 11px;
+  }
+
   .device-list {
     grid-template-columns: 1fr;
   }
@@ -969,6 +978,7 @@ button:disabled {
   }
 
   .refresh-button,
+  .logout-link,
   .device-row,
   .date-navigation-button,
   .date-control,
